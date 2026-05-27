@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: yt-to-mp3
+    runtime: docker
+    plan: free
+    healthCheckPath: /

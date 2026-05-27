@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YouTube to MP3 Converter</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: #0f0f0f;
+    color: #e0e0e0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .container {
+    width: 100%;
+    max-width: 600px;
+    padding: 40px 24px;
+    text-align: center;
+  }
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #ff0050, #ff6b00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subtitle {
+    color: #888;
+    margin-bottom: 40px;
+    font-size: 0.95rem;
+  }
+  .input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  input[type="text"] {
+    flex: 1;
+    padding: 14px 18px;
+    border: 2px solid #2a2a2a;
+    border-radius: 12px;
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus {
+    border-color: #ff0050;
+  }
+  input[type="text"]::placeholder {
+    color: #555;
+  }
+  button {
+    padding: 14px 28px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ff0050, #ff6b00);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    white-space: nowrap;
+  }
+  button:hover { opacity: 0.9; }
+  button:active { transform: scale(0.97); }
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .error {
+    color: #ff4444;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+    min-height: 24px;
+  }
+  .status-box {
+    background: #1a1a1a;
+    border: 2px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 8px;
+    display: none;
+  }
+  .status-box.active { display: block; }
+  .status-text {
+    font-size: 0.95rem;
+    color: #aaa;
+    margin-bottom: 12px;
+  }
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: #2a2a2a;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 16px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff0050, #ff6b00);
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.3s;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  .progress-fill.done {
+    animation: none;
+    width: 100%;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  .download-btn {
+    display: none;
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #00c853, #00e676);
+    font-size: 1.05rem;
+    margin-top: 4px;
+  }
+  .download-btn:hover { opacity: 0.9; }
+  .video-title {
+    font-size: 0.9rem;
+    color: #ff6b00;
+    margin-bottom: 12px;
+    font-weight: 500;
+    word-break: break-word;
+  }
+  .spinner {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #555;
+    border-top-color: #ff0050;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .footer {
+    margin-top: 60px;
+    color: #444;
+    font-size: 0.8rem;
+  }
+  .footer a {
+    color: #888;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer a:hover {
+    color: #5865F2;
+  }
+  .discord-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding: 8px 18px;
+    background: #5865F2;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+  .discord-link:hover {
+    opacity: 0.85;
+    color: #fff;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>YouTube to MP3</h1>
+  <p class="subtitle">Paste a YouTube link and download the audio</p>
+
+  <div class="input-group">
+    <input type="text" id="urlInput" placeholder="https://youtube.com/watch?v=..." autocomplete="off">
+    <button id="convertBtn" onclick="startConvert()">Convert</button>
+  </div>
+
+  <div class="error" id="error"></div>
+
+  <div class="status-box" id="statusBox">
+    <div class="video-title" id="videoTitle"></div>
+    <div class="status-text" id="statusText"></div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <button class="download-btn" id="downloadBtn" onclick="downloadFile()">Download MP3</button>
+  </div>
+
+  <div class="footer">
+    <div>Created by <strong style="color:#888;">Tabish Shah</strong></div>
+    <a class="discord-link" href="https://discord.gg/gjmqfb2amy" target="_blank">
+      <svg width="16" height="12" viewBox="0 0 71 55" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M60.1 4.9A58.5 58.5 0 0 0 45.4.1a.2.2 0 0 0-.2.1 40.7 40.7 0 0 0-1.8 3.7 54 54 0 0 0-16.2 0A38 38 0 0 0 25.4.2a.2.2 0 0 0-.2-.1A58.4 58.4 0 0 0 10.5 4.9a.2.2 0 0 0-.1.1C1.5 18.7-.9 32.2.3 45.5a.2.2 0 0 0 .1.2 59 59 0 0 0 17.7 9 .2.2 0 0 0 .3-.1 42.5 42.5 0 0 0 3.7-6.1.2.2 0 0 0-.1-.3 39 39 0 0 1-5.6-2.7.2.2 0 0 1 0-.3c.4-.3.7-.6 1.1-.9a.2.2 0 0 1 .2 0c11.7 5.4 24.4 5.4 35.9 0a.2.2 0 0 1 .2 0l1.1.9a.2.2 0 0 1 0 .3c-1.8 1-3.6 1.9-5.6 2.7a.2.2 0 0 0-.1.3 47.8 47.8 0 0 0 3.7 6.1.2.2 0 0 0 .2.1 58.6 58.6 0 0 0 17.8-9 .2.2 0 0 0 .1-.1c1.5-15.3-2.6-28.7-11.1-40.6a.2.2 0 0 0-.1-.1ZM23.7 37.3c-3.5 0-6.3-3.2-6.3-7.1s2.8-7.1 6.3-7.1c3.5 0 6.4 3.2 6.3 7.1 0 3.9-2.8 7.1-6.3 7.1Zm23.4 0c-3.5 0-6.3-3.2-6.3-7.1s2.8-7.1 6.3-7.1c3.5 0 6.4 3.2 6.3 7.1 0 3.9-2.8 7.1-6.3 7.1Z" fill="#fff"/></svg>
+      Join Discord
+    </a>
+  </div>
+</div>
+
+<script>
+const urlInput = document.getElementById('urlInput');
+const convertBtn = document.getElementById('convertBtn');
+const errorEl = document.getElementById('error');
+const statusBox = document.getElementById('statusBox');
+const statusText = document.getElementById('statusText');
+const progressFill = document.getElementById('progressFill');
+const downloadBtn = document.getElementById('downloadBtn');
+const videoTitle = document.getElementById('videoTitle');
+
+let currentTaskId = null;
+
+urlInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') startConvert();
+});
+
+function showError(msg) {
+  errorEl.textContent = msg;
+}
+
+function clearError() {
+  errorEl.textContent = '';
+}
+
+async function startConvert() {
+  clearError();
+  const url = urlInput.value.trim();
+
+  if (!url) {
+    showError('Please enter a YouTube URL');
+    return;
+  }
+
+  if (!/^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|shorts\/)|youtu\.be\/)/.test(url)) {
+    showError('Please enter a valid YouTube URL');
+    return;
+  }
+
+  convertBtn.disabled = true;
+  statusBox.classList.add('active');
+  downloadBtn.style.display = 'none';
+  videoTitle.textContent = '';
+  progressFill.style.width = '0%';
+  progressFill.classList.remove('done');
+  statusText.innerHTML = '<span class="spinner"></span>Starting conversion...';
+
+  try {
+    const res = await fetch('/convert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      showError(data.error);
+      convertBtn.disabled = false;
+      statusBox.classList.remove('active');
+      return;
+    }
+
+    currentTaskId = data.task_id;
+    pollStatus();
+  } catch (err) {
+    showError('Failed to connect to server');
+    convertBtn.disabled = false;
+    statusBox.classList.remove('active');
+  }
+}
+
+async function pollStatus() {
+  if (!currentTaskId) return;
+
+  try {
+    const res = await fetch(`/status/${currentTaskId}`);
+    const data = await res.json();
+
+    if (data.error) {
+      showError(data.error);
+      convertBtn.disabled = false;
+      statusBox.classList.remove('active');
+      return;
+    }
+
+    statusText.innerHTML = `<span class="spinner"></span>${data.progress}`;
+
+    if (data.status === 'done') {
+      progressFill.classList.add('done');
+      progressFill.style.width = '100%';
+      statusText.textContent = data.progress;
+      videoTitle.textContent = data.title || '';
+      downloadBtn.style.display = 'block';
+      convertBtn.disabled = false;
+      return;
+    }
+
+    if (data.status === 'error') {
+      showError(data.progress || 'Conversion failed');
+      convertBtn.disabled = false;
+      progressFill.classList.remove('done');
+      return;
+    }
+
+    // Update progress bar from percentage in status text
+    const match = data.progress.match(/(\d+)%/);
+    if (match) {
+      progressFill.style.width = match[1] + '%';
+    }
+
+    setTimeout(pollStatus, 1000);
+  } catch (err) {
+    showError('Lost connection to server');
+    convertBtn.disabled = false;
+  }
+}
+
+function downloadFile() {
+  if (!currentTaskId) return;
+  window.location.href = `/download/${currentTaskId}`;
+  downloadBtn.textContent = 'Downloading...';
+  setTimeout(() => {
+    downloadBtn.textContent = 'Download MP3';
+    downloadBtn.style.display = 'none';
+    statusBox.classList.remove('active');
+    currentTaskId = null;
+    urlInput.value = '';
+  }, 3000);
+}
+</script>
+</body>
+</html>
