@@ -50,6 +50,10 @@ def convert_audio(task_id, url):
             "no_warnings": True,
         }
 
+        cookiefile = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
+        if os.path.exists(cookiefile):
+            ydl_opts["cookiefile"] = cookiefile
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
             title = info.get("title", "audio")
