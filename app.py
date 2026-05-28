@@ -2,6 +2,8 @@ import os
 import re
 import uuid
 import glob
+import shutil
+import tempfile
 import threading
 from flask import Flask, render_template, request, jsonify, send_file
 import yt_dlp
@@ -51,8 +53,12 @@ def convert_audio(task_id, url):
         }
 
         cookiefile = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
+        tmp_cookiefile = None
         if os.path.exists(cookiefile):
-            ydl_opts["cookiefile"] = cookiefile
+            tmp_cookiefile = tempfile.NamedTemporaryFile(delete=False, suffix=".txt", prefix="cookies_")
+            tmp_cookiefile.close()
+            shutil.copy2(cookiefile, tmp_cookiefile.name)
+            ydl_opts["cookiefile"] = tmp_cookiefile.name
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
@@ -74,6 +80,9 @@ def convert_audio(task_id, url):
     except Exception as e:
         tasks[task_id]["status"] = "error"
         tasks[task_id]["progress"] = str(e)[:200]
+    finally:
+        if tmp_cookiefile and os.path.exists(tmp_cookiefile.name):
+            os.unlink(tmp_cookiefile.name)
 
 
 @app.route("/")
