@@ -52,12 +52,13 @@ def convert_audio(task_id, url):
             "no_warnings": True,
         }
 
-        cookiefile = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies.txt")
+        cookiefile = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies_master.txt")
         tmp_cookiefile = None
         if os.path.exists(cookiefile):
             tmp_cookiefile = tempfile.NamedTemporaryFile(delete=False, suffix=".txt", prefix="cookies_")
             tmp_cookiefile.close()
             shutil.copy2(cookiefile, tmp_cookiefile.name)
+            os.chmod(tmp_cookiefile.name, 0o644)
             ydl_opts["cookiefile"] = tmp_cookiefile.name
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
