@@ -246,6 +246,18 @@ def download(task_id):
     return send_file(filepath, as_attachment=True, download_name=display_name, mimetype="audio/mpeg")
 
 
+EXTENSION_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "extension")
+
+
+@app.route("/extension/<path:filename>")
+def serve_extension(filename):
+    """Serve Chrome extension files for download/installation."""
+    filepath = os.path.join(EXTENSION_DIR, filename)
+    if not os.path.exists(filepath):
+        return jsonify({"error": "File not found"}), 404
+    return send_file(filepath)
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print(f"YouTube to MP3 Converter running at http://localhost:{port}")

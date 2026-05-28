@@ -203,12 +203,17 @@
     <button class="download-btn" id="downloadBtn" onclick="downloadFile()">Download MP3</button>
   </div>
 
-  <div class="extension-banner" id="extensionBanner" style="margin-top:32px;padding:16px;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:12px;text-align:left;display:none;">
-    <div style="font-weight:600;color:#ff6b00;margin-bottom:8px;">Browser Extension Available</div>
-    <div style="font-size:0.85rem;color:#999;line-height:1.5;">
-      Having trouble with direct downloads? Install our Chrome extension to extract audio directly from YouTube pages using your browser connection.
+  <div class="extension-banner" style="margin-top:32px;padding:20px;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:12px;text-align:left;">
+    <div style="font-weight:600;color:#ff6b00;margin-bottom:8px;font-size:1.05rem;">Browser Extension (Recommended)</div>
+    <div style="font-size:0.85rem;color:#999;line-height:1.6;">
+      YouTube blocks server-side downloads from datacenter IPs. Our Chrome extension extracts audio directly from your browser — works for <strong style="color:#e0e0e0;">any video</strong>.
       <br><br>
-      <strong>How to install:</strong> Download the extension folder from the server, go to <code style="background:#222;padding:2px 6px;border-radius:4px;">chrome://extensions</code>, enable Developer Mode, click "Load unpacked" and select the extension folder.
+      <strong style="color:#ccc;">Install:</strong><br>
+      1. <a href="/extension/manifest.json" download style="color:#ff6b00;">Download extension files</a> (or copy the <code style="background:#222;padding:2px 6px;border-radius:4px;">extension/</code> folder from the project)<br>
+      2. Open <code style="background:#222;padding:2px 6px;border-radius:4px;">chrome://extensions</code> in Chrome<br>
+      3. Enable <strong>Developer mode</strong> (top right toggle)<br>
+      4. Click <strong>"Load unpacked"</strong> and select the extension folder<br>
+      5. Go to any YouTube video — a red <strong>"Download MP3"</strong> button will appear below the video
     </div>
   </div>
 
@@ -318,14 +323,9 @@ async function pollStatus() {
     }
 
     if (data.status === 'error') {
-      const errMsg = data.progress || 'Conversion failed';
-      showError(errMsg);
+      showError(data.progress || 'Conversion failed');
       convertBtn.disabled = false;
       progressFill.classList.remove('done');
-      // Show extension banner if bot detection
-      if (errMsg.toLowerCase().includes('bot') || errMsg.toLowerCase().includes('sign in')) {
-        document.getElementById('extensionBanner').style.display = 'block';
-      }
       return;
     }
 
