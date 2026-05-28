@@ -53,6 +53,10 @@ def convert_audio(task_id, url):
             "js_runtimes": {"deno": {}},
         }
 
+        proxy = os.environ.get("PROXY_URL")
+        if proxy:
+            ydl_opts["proxy"] = proxy
+
         cookiefile = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies_master.txt")
         tmp_cookiefile = None
         if os.path.exists(cookiefile):
