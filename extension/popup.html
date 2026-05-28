@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      body {
+        width: 300px;
+        padding: 16px;
+        font-family: Arial, sans-serif;
+        background: #1a1a1a;
+        color: #fff;
+      }
+      h2 {
+        margin: 0 0 12px;
+        font-size: 16px;
+        color: #ff0000;
+      }
+      label {
+        font-size: 13px;
+        color: #aaa;
+        display: block;
+        margin-bottom: 4px;
+      }
+      input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #333;
+        border-radius: 6px;
+        background: #222;
+        color: #fff;
+        font-size: 13px;
+        box-sizing: border-box;
+        margin-bottom: 10px;
+      }
+      button {
+        width: 100%;
+        padding: 10px;
+        background: #ff0000;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #cc0000;
+      }
+      .status {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #4caf50;
+        text-align: center;
+      }
+      .info {
+        margin-top: 12px;
+        font-size: 11px;
+        color: #666;
+        line-height: 1.4;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>YT to MP3 Downloader</h2>
+    <label for="server">Server URL</label>
+    <input type="text" id="server" placeholder="http://149.118.130.92" />
+    <button id="save">Save</button>
+    <div class="status" id="status"></div>
+    <div class="info">
+      Open any YouTube video page and click the red "Download MP3" button
+      below the video title.
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>

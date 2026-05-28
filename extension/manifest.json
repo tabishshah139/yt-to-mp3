@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "YT to MP3 Downloader",
+  "version": "1.0",
+  "description": "Download YouTube videos as MP3 via your server",
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": [
+    "*://*.youtube.com/*",
+    "http://149.118.130.92/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/watch*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

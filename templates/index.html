@@ -203,6 +203,15 @@
     <button class="download-btn" id="downloadBtn" onclick="downloadFile()">Download MP3</button>
   </div>
 
+  <div class="extension-banner" id="extensionBanner" style="margin-top:32px;padding:16px;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:12px;text-align:left;display:none;">
+    <div style="font-weight:600;color:#ff6b00;margin-bottom:8px;">Browser Extension Available</div>
+    <div style="font-size:0.85rem;color:#999;line-height:1.5;">
+      Having trouble with direct downloads? Install our Chrome extension to extract audio directly from YouTube pages using your browser connection.
+      <br><br>
+      <strong>How to install:</strong> Download the extension folder from the server, go to <code style="background:#222;padding:2px 6px;border-radius:4px;">chrome://extensions</code>, enable Developer Mode, click "Load unpacked" and select the extension folder.
+    </div>
+  </div>
+
   <div class="footer">
     <div>Created by <strong style="color:#888;">Tabish Shah</strong></div>
     <a class="discord-link" href="https://discord.gg/gjmqfb2amy" target="_blank">
@@ -309,9 +318,14 @@ async function pollStatus() {
     }
 
     if (data.status === 'error') {
-      showError(data.progress || 'Conversion failed');
+      const errMsg = data.progress || 'Conversion failed';
+      showError(errMsg);
       convertBtn.disabled = false;
       progressFill.classList.remove('done');
+      // Show extension banner if bot detection
+      if (errMsg.toLowerCase().includes('bot') || errMsg.toLowerCase().includes('sign in')) {
+        document.getElementById('extensionBanner').style.display = 'block';
+      }
       return;
     }
 

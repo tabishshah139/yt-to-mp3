@@ -5,10 +5,20 @@ import glob
 import shutil
 import tempfile
 import threading
+import subprocess
+import urllib.request
 from flask import Flask, render_template, request, jsonify, send_file
 import yt_dlp
 
 app = Flask(__name__)
+
+# CORS support for browser extension
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    response.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
+    return response
 
 DOWNLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads")
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
@@ -89,6 +99,92 @@ def convert_audio(task_id, url):
     finally:
         if tmp_cookiefile and os.path.exists(tmp_cookiefile.name):
             os.unlink(tmp_cookiefile.name)
+
+
+def convert_stream_audio(task_id, stream_url, title):
+    """Download audio from a direct stream URL and convert to MP3.
+    Used by the browser extension which provides the CDN audio URL."""
+    tmp_input = None
+    try:
+        tasks[task_id]["status"] = "downloading"
+        tasks[task_id]["progress"] = "Downloading audio stream..."
+
+        # Download the audio stream
+        tmp_input = tempfile.NamedTemporaryFile(delete=False, suffix=".webm", prefix="stream_")
+        tmp_input.close()
+
+        req = urllib.request.Request(stream_url, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Origin": "https://www.youtube.com",
+            "Referer": "https://www.youtube.com/",
+        })
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            total = int(resp.headers.get("Content-Length", 0))
+            downloaded = 0
+            chunk_size = 65536
+            with open(tmp_input.name, "wb") as f:
+                while True:
+                    chunk = resp.read(chunk_size)
+                    if not chunk:
+                        break
+                    f.write(chunk)
+                    downloaded += len(chunk)
+                    if total:
+                        percent = int(downloaded / total * 100)
+                        tasks[task_id]["progress"] = f"Downloading... {percent}%"
+
+        tasks[task_id]["progress"] = "Converting to MP3..."
+
+        # Convert to MP3 using ffmpeg
+        mp3_file = os.path.join(DOWNLOAD_DIR, f"{task_id}.mp3")
+        result = subprocess.run(
+            ["ffmpeg", "-y", "-i", tmp_input.name, "-codec:a", "libmp3lame", "-b:a", "192k", mp3_file],
+            capture_output=True, timeout=120
+        )
+
+        if os.path.exists(mp3_file) and os.path.getsize(mp3_file) > 0:
+            safe_title = re.sub(r'[^\w\s\-\(\)]', '', title)[:80]
+            tasks[task_id]["status"] = "done"
+            tasks[task_id]["filename"] = f"{task_id}.mp3"
+            tasks[task_id]["title"] = safe_title
+            tasks[task_id]["progress"] = "Done!"
+        else:
+            tasks[task_id]["status"] = "error"
+            tasks[task_id]["progress"] = f"ffmpeg conversion failed: {result.stderr.decode()[:200]}"
+
+    except Exception as e:
+        tasks[task_id]["status"] = "error"
+        tasks[task_id]["progress"] = str(e)[:200]
+    finally:
+        if tmp_input and os.path.exists(tmp_input.name):
+            os.unlink(tmp_input.name)
+
+
+@app.route("/api/convert-url", methods=["POST", "OPTIONS"])
+def convert_url():
+    """Accept a direct audio stream URL from the browser extension."""
+    if request.method == "OPTIONS":
+        return "", 204
+
+    data = request.get_json()
+    stream_url = data.get("url", "").strip()
+    title = data.get("title", "audio").strip()
+    video_id = data.get("videoId", "").strip()
+
+    if not stream_url:
+        return jsonify({"error": "No URL provided"}), 400
+
+    # Validate it's a googlevideo URL (YouTube CDN)
+    if "googlevideo.com" not in stream_url and "youtube.com" not in stream_url:
+        return jsonify({"error": "Invalid stream URL"}), 400
+
+    task_id = str(uuid.uuid4())[:8]
+    tasks[task_id] = {"status": "queued", "progress": "Queued...", "filename": None, "title": title}
+
+    thread = threading.Thread(target=convert_stream_audio, args=(task_id, stream_url, title), daemon=True)
+    thread.start()
+
+    return jsonify({"task_id": task_id})
 
 
 @app.route("/")
