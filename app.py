@@ -40,7 +40,7 @@ def convert_audio(task_id, url):
                 tasks[task_id]["progress"] = "Converting to MP3..."
 
         ydl_opts = {
-            "format": "bestaudio/best",
+            "format": "bestaudio*/best",
             "outtmpl": output_template,
             "progress_hooks": [progress_hook],
             "postprocessors": [{
@@ -50,6 +50,7 @@ def convert_audio(task_id, url):
             }],
             "quiet": True,
             "no_warnings": True,
+            "js_runtimes": {"deno": {}},
         }
 
         cookiefile = os.path.join(os.path.dirname(os.path.abspath(__file__)), "cookies_master.txt")
